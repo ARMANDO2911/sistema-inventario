@@ -110,28 +110,31 @@ else:
     nombre, numero, fecha_ingreso = "Desconocido", codigo, "Desconocida"
 
 return f"""
+```
+
 <html>
 <body style="text-align:center;font-family:Arial">
 
-    <div style="border:2px solid black; display:inline-block; padding:20px;">
-        <h2>EDAE</h2>
-        <h3>{nombre}</h3>
-        <h3>NP: {numero}</h3>
-        <h3>Fecha de ingreso: {fecha_ingreso}</h3>
+```
+<div style="border:2px solid black; display:inline-block; padding:20px;">
+    <h2>EDAE</h2>
+    <h3>{nombre}</h3>
+    <h3>NP: {numero}</h3>
+    <h3>Fecha de ingreso: {fecha_ingreso}</h3>
 
-        <img src='/static/qrs/{codigo}.png' width='200'>
+    <img src='/static/qrs/{codigo}.png' width='200'>
 
-        <h3>{codigo}</h3>
-    </div>
+    <h3>{codigo}</h3>
+</div>
 
-    <br><br>
+<br><br>
 
-    <button onclick="window.print()">🖨️ Imprimir</button>
+<button onclick="window.print()">🖨️ Imprimir</button>
+```
 
 </body>
 </html>
 """
-```
 
 # CREAR PRODUCTO
 
