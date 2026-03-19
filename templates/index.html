@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Inventario Taller</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(to right,#0a1f44,#ffffff);
+margin:0;
+}
+
+header{
+background-color:#0a1f44;
+color:white;
+padding:20px;
+text-align:center;
+position:relative;
+}
+
+header img{
+width:120px;
+}
+
+header h1{
+margin:10px 0;
+}
+
+.logout{
+position:absolute;
+top:20px;
+right:20px;
+}
+
+.acciones{
+text-align:center;
+margin-top:20px;
+}
+
+.acciones button{
+width:200px;
+background:#0a1f44;
+color:white;
+padding:10px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+}
+
+.acciones button:hover{
+background:#06142e;
+}
+
+.main{
+display:flex;
+justify-content:center;
+align-items:flex-start;
+gap:40px;
+margin-top:30px;
+flex-wrap:wrap;
+}
+
+.container{
+background:white;
+padding:20px;
+width:320px;
+border-radius:15px;
+box-shadow:0px 0px 15px rgba(0,0,0,0.2);
+text-align:center;
+}
+
+h2{
+color:#0a1f44;
+}
+
+input,select{
+width:90%;
+padding:10px;
+margin:10px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+background-color:#c1121f;
+color:white;
+border:none;
+padding:12px;
+width:90%;
+border-radius:10px;
+cursor:pointer;
+font-size:16px;
+}
+
+button:hover{
+background-color:#780000;
+}
+
+#reader{
+margin:auto;
+width:250px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+
+<img src="/static/escudo.png">
+
+<h1>EDAE - REGISTRO DE ALMACÉN</h1>
+
+<div class="logout">
+<a href="/logout">
+<button style="width:auto;">Cerrar sesión</button>
+</a>
+</div>
+
+</header>
+
+
+<div class="acciones">
+
+<button onclick="window.location.href='/ver_datos'">
+📊 Ver Inventario
+</button>
+
+</div>
+
+
+
+<div class="main">
+
+
+<!-- ESCANEAR -->
+
+<div class="container">
+
+<h2>📦 Escanear</h2>
+
+<div id="reader"></div>
+
+<input type="text" id="qr" placeholder="QR detectado">
+
+
+<select id="tecnico">
+
+<option value="">Selecciona técnico</option>
+
+{% for t in tecnicos %}
+<option value="{{t}}">{{t}}</option>
+{% endfor %}
+
+</select>
+
+
+<select id="tipo">
+
+<option value="SALIDA">Salida</option>
+<option value="ENTRADA">Entrada</option>
+<option value="AJUSTE">Ajuste</option>
+
+</select>
+
+
+<input type="number" id="cantidad" placeholder="Cantidad">
+
+
+<input type="text" id="matricula" placeholder="Matrícula de aeronave">
+
+
+<input type="text" id="descripcion" placeholder="Descripción de tarea">
+
+
+<button onclick="enviar()">Registrar</button>
+
+</div>
+
+
+
+<!-- CREAR PRODUCTO -->
+
+<div class="container">
+
+<h2>➕ Entrada de Almacén</h2>
+
+<input type="text" id="nombre" placeholder="Nombre">
+
+<input type="text" id="parte" placeholder="Número de parte">
+
+<input type="number" id="stock" placeholder="Stock">
+
+<input type="date" name="fecha_ingreso" value="{{fecha_hoy}}">
+
+<button onclick="crear()">Crear</button>
+
+<br><br>
+
+<img id="qr_img" width="150">
+
+<button id="imprimir_btn" style="display:none;">
+🖨️ Imprimir QR
+</button>
+
+</div>
+
+
+</div>
+
+
+
+<script>
+
+function onScanSuccess(decodedText){
+document.getElementById("qr").value = decodedText;
+}
+
+new Html5QrcodeScanner("reader",{fps:10,qrbox:200}).render(onScanSuccess);
+
+
+
+function enviar(){
+
+let qr=document.getElementById("qr").value;
+let cantidad=document.getElementById("cantidad").value;
+let tecnico=document.getElementById("tecnico").value;
+let matricula=document.getElementById("matricula").value;
+let descripcion=document.getElementById("descripcion").value;
+
+if(!qr || !cantidad || !tecnico){
+alert("Completa todos los campos");
+return;
+}
+
+fetch("/movimiento",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+tipo:document.getElementById("tipo").value,
+producto_qr:qr,
+cantidad:cantidad,
+tecnico:tecnico,
+matricula:matricula,
+descripcion:descripcion
+
+})
+
+})
+
+.then(res=>res.json())
+
+.then(data=>{
+
+if(data.error){
+alert(data.error);
+}else{
+
+alert("Movimiento registrado");
+
+document.getElementById("cantidad").value="";
+document.getElementById("matricula").value="";
+document.getElementById("descripcion").value="";
+
+}
+
+});
+
+}
+
+
+
+function crear(){
+
+let nombre=document.getElementById("nombre").value;
+let parte=document.getElementById("parte").value;
+let stock=document.getElementById("stock").value;
+let fecha_ingreso=document.querySelector("input[name='fecha_ingreso']").value;
+
+if(!nombre || !parte || !stock){
+alert("Completa todos los campos");
+return;
+}
+
+fetch("/crear_producto",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+nombre:nombre,
+numero_parte:parte,
+stock:stock,
+fecha_ingreso:fecha_ingreso
+
+})
+
+})
+
+.then(res=>res.json())
+
+.then(data=>{
+
+if(data.error){
+alert(data.error);
+return;
+}
+
+document.getElementById("qr_img").src="/static/qrs/"+parte+".png";
+
+let btn=document.getElementById("imprimir_btn");
+
+btn.style.display="block";
+
+btn.onclick=function(){
+
+window.open("/qr/"+parte);
+
+};
+
+alert("Producto creado");
+
+});
+
+}
+
+</script>
+
+</body>
+</html>

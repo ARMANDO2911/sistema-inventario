@@ -1,0 +1,6 @@
+flask
+gunicorn
+pandas
+qrcode
+pytz
+openpyxl

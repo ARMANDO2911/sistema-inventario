@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Inventario</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:linear-gradient(to right,#0a1f44,#ffffff);
+margin:0;
+text-align:center;
+}
+
+h2,h3{
+color:#0a1f44;
+}
+
+.top{
+margin:20px;
+}
+
+.top button{
+background:#0a1f44;
+color:white;
+padding:10px 15px;
+border:none;
+border-radius:8px;
+margin:5px;
+cursor:pointer;
+}
+
+.top button:hover{
+background:#06142e;
+}
+
+form{
+margin:20px;
+}
+
+input,select{
+padding:8px;
+margin:5px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+table{
+margin:20px auto;
+border-collapse:collapse;
+width:90%;
+background:white;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0px 0px 10px rgba(0,0,0,0.2);
+}
+
+th{
+background:#0a1f44;
+color:white;
+padding:12px;
+}
+
+td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+tr:hover{
+background:#f1f1f1;
+}
+
+button{
+padding:6px 10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.editar{
+background:#fca311;
+}
+
+.eliminar{
+background:#d90429;
+color:white;
+}
+
+.qr{
+background:#0a1f44;
+color:white;
+}
+
+.stock-bajo{
+background:#d90429;
+color:white;
+padding:5px 10px;
+border-radius:8px;
+}
+
+.stock-ok{
+background:#2a9d8f;
+color:white;
+padding:5px 10px;
+border-radius:8px;
+}
+
+#modal{
+display:none;
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+background:white;
+padding:25px;
+border-radius:12px;
+box-shadow:0px 0px 20px rgba(0,0,0,0.3);
+width:300px;
+z-index:1000;
+}
+
+#modal input{
+width:90%;
+}
+
+#modal button{
+margin:5px;
+width:40%;
+}
+
+.excel-btn{
+background:#0a1f44;
+color:white;
+padding:12px 20px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+margin:20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>📊 Inventario</h2>
+
+<div class="top">
+
+<a href="/">
+<button>⬅️ Volver</button>
+</a>
+
+<a href="/logout">
+<button style="background:#d90429;">Cerrar sesión</button>
+</a>
+
+</div>
+
+
+<!-- FILTROS -->
+
+<form method="GET">
+
+<input type="date" name="inicio">
+
+<input type="date" name="fin">
+
+<select name="tecnico">
+<option value="">Todos</option>
+
+{% for t in tecnicos %}
+<option>{{t}}</option>
+{% endfor %}
+
+</select>
+
+<button type="submit">Filtrar</button>
+
+</form>
+
+
+
+<!-- PRODUCTOS -->
+
+<h3>📦 Productos</h3>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>Nombre</th>
+<th>Parte</th>
+<th>Stock</th>
+<th>Fecha ingreso</th>
+<th>Acciones</th>
+</tr>
+
+{% for p in productos %}
+
+<tr>
+
+<td>{{p[0]}}</td>
+<td>{{p[1]}}</td>
+<td>{{p[2]}}</td>
+
+<td>
+<span class="{{ 'stock-bajo' if p[3] < 10 else 'stock-ok' }}">
+{{p[3]}}
+</span>
+</td>
+
+<td>{{p[4]}}</td>
+
+<td>
+
+<button class="qr"
+onclick="verQR('{{p[2]}}')">
+QR
+</button>
+
+<button class="editar"
+onclick="abrirModal({{p[0]}}, '{{p[1]}}', '{{p[2]}}', {{p[3]}})">
+Editar
+</button>
+
+<button class="eliminar"
+onclick="eliminarProducto({{p[0]}})">
+Eliminar
+</button>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+
+
+<!-- MOVIMIENTOS -->
+
+<h3>🔄 Movimientos</h3>
+
+<table>
+
+<tr>
+<th>ID</th>
+<th>Tipo</th>
+<th>Técnico</th>
+<th>Producto</th>
+<th>Cantidad</th>
+<th>Fecha</th>
+<th>Matrícula</th>
+<th>Descripción</th>
+<th>Acción</th>
+</tr>
+
+{% for m in movimientos %}
+
+<tr>
+
+<td>{{m[0]}}</td>
+<td>{{m[1]}}</td>
+<td>{{m[2]}}</td>
+<td>{{m[3]}}</td>
+<td>{{m[4]}}</td>
+<td>{{m[5]}}</td>
+<td>{{m[6]}}</td>
+<td>{{m[7]}}</td>
+
+<td>
+
+<button class="eliminar"
+onclick="eliminarMovimiento({{m[0]}})">
+X
+</button>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+
+
+<a href="/reporte_excel">
+<button class="excel-btn">📥 Descargar Excel</button>
+</a>
+
+
+
+<!-- MODAL EDITAR -->
+
+<div id="modal">
+
+<h3>Editar producto</h3>
+
+<input id="editNombre" placeholder="Nombre"><br><br>
+<input id="editParte" placeholder="Parte"><br><br>
+<input id="editStock" type="number" placeholder="Stock"><br><br>
+
+<button onclick="guardar()">Guardar</button>
+<button onclick="cerrar()">Cancelar</button>
+
+</div>
+
+
+
+<script>
+
+let editId = null;
+
+function abrirModal(id,nombre,parte,stock){
+
+editId = id;
+
+document.getElementById("editNombre").value = nombre;
+document.getElementById("editParte").value = parte;
+document.getElementById("editStock").value = stock;
+
+document.getElementById("modal").style.display = "block";
+
+}
+
+function cerrar(){
+document.getElementById("modal").style.display="none";
+}
+
+
+function guardar(){
+
+fetch("/editar_producto/"+editId,{
+
+method:"PUT",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+nombre:document.getElementById("editNombre").value,
+numero_parte:document.getElementById("editParte").value,
+stock:document.getElementById("editStock").value
+
+})
+
+})
+
+.then(res=>res.json())
+
+.then(data=>{
+
+if(data.status==="ok"){
+
+alert("Producto actualizado");
+location.reload();
+
+}else{
+
+alert("Error: "+data.error);
+
+}
+
+});
+
+}
+
+
+
+function eliminarProducto(id){
+
+if(confirm("¿Seguro que deseas eliminar el producto?")){
+
+fetch("/eliminar_producto/"+id,{
+method:"DELETE"
+})
+
+.then(res=>res.json())
+
+.then(data=>{
+
+if(data.status==="ok"){
+
+location.reload();
+
+}else{
+
+alert("Error: "+data.error);
+
+}
+
+});
+
+}
+
+}
+
+
+
+function eliminarMovimiento(id){
+
+if(confirm("¿Eliminar movimiento?")){
+
+fetch("/eliminar_movimiento/"+id,{
+method:"DELETE"
+})
+
+.then(res=>res.json())
+
+.then(data=>{
+
+if(data.status==="ok"){
+
+location.reload();
+
+}else{
+
+alert("Error: "+data.error);
+
+}
+
+});
+
+}
+
+}
+
+
+
+function verQR(parte){
+
+window.open("/qr/"+parte);
+
+}
+
+</script>
+
+</body>
+</html>
